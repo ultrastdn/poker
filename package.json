@@ -1,0 +1,28 @@
+{
+  "name": "holdem-table",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Texas Hold'em table prototype",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "sass": "^1.105.1",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

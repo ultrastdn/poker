@@ -1,0 +1,46 @@
+// 牌厅视觉令牌：呢绒桌布 / 胡桃木桌沿 / 黄铜饰件 / 象牙牌面
+$felt-abyss: #0a211b;
+$felt-deep: #0f3227;
+$felt: #16483a;
+$felt-lit: #1f5c48;
+$felt-line: rgba(246, 241, 228, 0.1);
+
+$rail: #45280f;
+$rail-hi: #6d4423;
+$rail-lo: #291507;
+
+$brass: #c9a239;
+$brass-lit: #e6c463;
+$brass-deep: #8d6c14;
+
+$ivory: #f7f2e5;
+$ivory-dim: #ded6c3;
+$ink: #17130f;
+$crimson: #b5282c;
+
+$muted: #a3bcae;
+$muted-deep: #8aa798;
+
+$chip-gold: #d4b13c;
+$chip-purple: #6b4a86;
+$chip-black: #211d19;
+$chip-green: #2f6b4f;
+$chip-red: #b5282c;
+$chip-white: #eee7d6;
+
+$font-display: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+$font-body: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+$font-mono: "SFMono-Regular", "Menlo", Consolas, "Courier New", monospace;
+
+@mixin numerals {
+  font-family: $font-mono;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+@mixin eyebrow {
+  font-size: 20px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: $muted;
+}

@@ -1,0 +1,100 @@
+@use '../styles/tokens' as *;
+
+.cs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cs__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cs__chip {
+  position: relative;
+  overflow: hidden;
+  width: 26px;
+  height: 7px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.cs--pot .cs__chip {
+  width: 32px;
+  height: 8px;
+}
+
+.cs__band {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  left: 3px;
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(247, 242, 229, 0.9) 0 2px,
+    transparent 2px 6px
+  );
+  opacity: 0.8;
+}
+
+.cs__chip--gold {
+  background: linear-gradient(180deg, $chip-gold 0%, #9c7a15 100%);
+}
+
+.cs__chip--purple {
+  background: linear-gradient(180deg, #7d5b98 0%, #4b2f62 100%);
+}
+
+.cs__chip--black {
+  background: linear-gradient(180deg, #38322c 0%, #14100d 100%);
+}
+
+.cs__chip--green {
+  background: linear-gradient(180deg, #3f8563 0%, #1d4b36 100%);
+}
+
+.cs__chip--red {
+  background: linear-gradient(180deg, #cc3a3e 0%, #8a1a1e 100%);
+}
+
+.cs__chip--white {
+  background: linear-gradient(180deg, #f7f2e5 0%, #c9c1ae 100%);
+}
+
+.cs__bundle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 13px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #d9cfb6 0%, #a89c7c 100%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transform: rotate(-1.5deg);
+}
+
+.cs--pot .cs__bundle {
+  width: 40px;
+  height: 16px;
+}
+
+.cs__bundle-text {
+  font-family: $font-mono;
+  font-size: 8px;
+  font-weight: 700;
+  color: $rail-lo;
+}
+
+.cs--pot .cs__bundle-text {
+  font-size: 10px;
+}
+
+.cs__label {
+  margin-top: 4px;
+  font-family: $font-mono;
+  font-size: 11px;
+  color: $brass-lit;
+}
