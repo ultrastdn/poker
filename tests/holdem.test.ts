@@ -1,11 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { decide } from '@/game/ai'
+import { decide, fastForward } from '@/game/ai'
 import type { Card, Suit } from '@/game/cards'
 import { cardKey, standardDeck } from '@/game/cards'
 import { equity } from '@/game/equity'
 import { compareScore, evaluate } from '@/game/evaluate'
 import type { Game } from '@/game/poker'
-import { act, blindPositions, newGame, potTotal, settle, startHand, turnOptions } from '@/game/poker'
+import {
+  act,
+  awaitingHuman,
+  blindPositions,
+  foldSeat,
+  newGame,
+  potTotal,
+  settle,
+  startHand,
+  turnOptions,
+} from '@/game/poker'
 import { summarize } from '@/game/session'
 import { mulberry32, shuffle } from '@/game/rng'
 
@@ -390,6 +400,61 @@ describe('full hands', () => {
       expect(seen.size).toBe(g.board.length + g.seats.length * 2)
       expect(g.winners.reduce((sum, winner) => sum + winner.amount, 0)).toBe(potTotal(g.seats))
     }
+  })
+})
+
+describe('quick fold', () => {
+  it('folds a seat that is not yet to act without taking the turn away', () => {
+    let g = newGame({ names: ['you', 'b', 'c', 'd'], stack: 200, sb: 5, bb: 10, seed: 31 })
+    g = startHand(g)
+    const actor = g.actor
+    expect(actor).not.toBe(0)
+
+    const folded = foldSeat(g, 0)
+
+    expect(folded.seats[0].folded).toBe(true)
+    expect(folded.actor).toBe(actor)
+    expect(folded.seats.map((seat) => seat.stack + seat.committed)).toEqual(
+      g.seats.map((seat) => seat.stack + seat.committed),
+    )
+    expect(folded.log.some((line) => line.text.includes('提前弃牌'))).toBe(true)
+  })
+
+  it('routes an in-turn fold through the normal action flow', () => {
+    let g = newGame({ names: ['a', 'b', 'c'], stack: 200, sb: 5, bb: 10, seed: 32 })
+    g = startHand(g)
+    const actor = g.actor
+
+    const folded = foldSeat(g, actor)
+
+    expect(folded.seats[actor].folded).toBe(true)
+    expect(folded.actor).not.toBe(actor)
+  })
+
+  it('leaves an already folded seat untouched', () => {
+    let g = newGame({ names: ['a', 'b', 'c'], stack: 200, sb: 5, bb: 10, seed: 33 })
+    g = startHand(g)
+    const folded = foldSeat(g, 0)
+
+    expect(foldSeat(folded, 0)).toBe(folded)
+  })
+
+  it('fast-forwards the rest of the hand with bots and still books it', () => {
+    let g = newGame({ names: ['you', 'b', 'c', 'd'], stack: 200, sb: 5, bb: 10, seed: 34 })
+    g = startHand(g)
+    const baseline = g.seats.map((seat) => seat.stack + seat.committed)
+
+    const done = fastForward(foldSeat(g, 0))
+
+    expect(done.handOver).toBe(true)
+    expect(awaitingHuman(done)).toBe(false)
+    expect(done.seats[0].folded).toBe(true)
+    expect(done.seats.reduce((sum, seat) => sum + seat.stack, 0)).toBe(
+      baseline.reduce((sum, value) => sum + value, 0),
+    )
+    expect(done.history).toHaveLength(1)
+    expect(done.history[0].outcome).toBe('fold')
+    expect(done.history[0].net).toBeLessThanOrEqual(0)
   })
 })
 

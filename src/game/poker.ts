@@ -626,6 +626,22 @@ export function act(game: Game, action: Action): Game {
   return g
 }
 
+/** 不在自己行动顺序上时提前弃牌：刚看完底牌就不想打这手 */
+export function foldSeat(game: Game, id: number): Game {
+  const target = game.seats[id]
+  if (game.handOver || game.actor < 0 || !target || !able(target)) return game
+  if (id === game.actor) return act(game, { type: 'fold' })
+
+  const g = clone(game)
+  const seat = g.seats[id]
+  seat.folded = true
+  seat.acted = true
+  g.reads[id].folded += 1
+  pushLog(g, 'action', `${seat.name} 提前弃牌`)
+  finishIfUncontested(g)
+  return g
+}
+
 export function awaitingHuman(g: Game): boolean {
   if (g.handOver || g.actor < 0) return false
   return g.seats[g.actor]?.human === true && able(g.seats[g.actor])

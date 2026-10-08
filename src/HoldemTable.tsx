@@ -3,7 +3,7 @@ import ChipStack from '@/components/ChipStack'
 import HandHistory from '@/components/HandHistory'
 import PlayerSeat from '@/components/PlayerSeat'
 import PlayingCard from '@/components/PlayingCard'
-import { decide } from '@/game/ai'
+import { decide, fastForward } from '@/game/ai'
 import { cardKey } from '@/game/cards'
 import { equity } from '@/game/equity'
 import { evaluate } from '@/game/evaluate'
@@ -12,6 +12,7 @@ import {
   act,
   awaitingHuman,
   blindPositions,
+  foldSeat,
   newGame,
   potTotal,
   roleOf,
@@ -108,6 +109,24 @@ export default function HoldemTable() {
     setRaiseMode(false)
     setRaiseTo(null)
   }
+  /** 弃掉这手并让机器人瞬间打完，直接开下一手，不用留在牌桌上观战 */
+  const quickFold = () =>
+    setGame((current) => {
+      const me = current.seats.find((seat) => seat.human)
+      if (!me) return current
+      const folded = foldSeat(current, me.id)
+      if (folded === current) return current
+      const done = fastForward(folded)
+      return done.handOver ? startHand(done) : done
+    })
+
+  const canQuickFold =
+    game.phase !== 'idle' && !game.handOver && !hero.folded && !hero.allIn && hero.stack > 0
+  const quickFoldBtn = canQuickFold ? (
+    <button type='button' className='btn btn--quick' onClick={quickFold}>
+      快速弃牌<span className='btn__hint'>直接下一手</span>
+    </button>
+  ) : null
 
   const opponentsLeft = game.seats.filter((seat) => seat.id !== 0 && !seat.folded).length
 
@@ -339,7 +358,12 @@ export default function HoldemTable() {
               </div>
             </div>
           ) : !myTurn || !opts ? (
-            <div className='dock__waiting'>等待 {game.seats[game.actor]?.name ?? '发牌'} 行动</div>
+            <>
+              <div className='dock__waiting'>
+                等待 {game.seats[game.actor]?.name ?? '发牌'} 行动
+              </div>
+              {quickFoldBtn}
+            </>
           ) : raiseMode ? (
             <div className='raise'>
               <div className='raise__head'>
@@ -402,6 +426,7 @@ export default function HoldemTable() {
               >
                 加注
               </button>
+              {quickFoldBtn}
             </>
           )}
         </section>

@@ -1,7 +1,7 @@
 import type { Card } from './cards'
 import { equity } from './equity'
 import type { Action, Difficulty, Game, Seat, SeatStyle, TurnOptions } from './poker'
-import { actsAfter, blindPositions, buttonDistance, roleOf, turnOptions } from './poker'
+import { act, actsAfter, awaitingHuman, blindPositions, buttonDistance, roleOf, turnOptions } from './poker'
 import { hashKey, mulberry32 } from './rng'
 
 type Brain = {
@@ -318,4 +318,14 @@ export function decide(game: Game): Action {
 
   if (ctx.preflop && game.raiseCount === 0) return firstIn(ctx)
   return ctx.opts.toCall === 0 ? facingNobody(ctx) : facingBet(ctx)
+}
+
+/** 玩家提前离桌后由机器人立刻打完这手，不必逐个等待观战 */
+export function fastForward(game: Game): Game {
+  let g = game
+  for (let step = 0; step < 400 && !g.handOver && !awaitingHuman(g); step++) {
+    if (g.actor < 0) break
+    g = act(g, decide(g))
+  }
+  return g
 }
