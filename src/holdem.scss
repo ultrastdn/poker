@@ -25,6 +25,7 @@ body,
 }
 
 .holdem__frame {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 9px;
@@ -34,9 +35,11 @@ body,
 
 .rail {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  column-gap: 8px;
+  row-gap: 5px;
   padding: 7px 12px;
   border-radius: 9px;
   background: linear-gradient(180deg, $rail-hi 0%, $rail 55%, $rail-lo 100%);
@@ -63,6 +66,53 @@ body,
   @include eyebrow;
 
   font-size: 9px;
+}
+
+.rail__record {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  font-family: $font-body;
+  font-size: 11px;
+  font-weight: 600;
+  color: $brass-lit;
+  background: rgba(9, 32, 26, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.42);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.rail__record:hover {
+  background: rgba(15, 50, 41, 0.85);
+}
+
+.rail__record:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.rail__record--on {
+  color: $ivory;
+  background: rgba(201, 162, 57, 0.26);
+  box-shadow: inset 0 0 0 1px rgba(230, 196, 99, 0.85);
+}
+
+.rail__net {
+  @include numerals;
+
+  font-size: 11px;
+  color: $brass-lit;
+}
+
+.rail__net--up {
+  color: $gain;
+}
+
+.rail__net--down {
+  color: $loss;
 }
 
 .table {
@@ -169,6 +219,61 @@ body,
   font-size: 11px;
   line-height: 1.65;
   color: $muted;
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pick__label {
+  flex: 0 0 34px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-align: right;
+  color: $muted-deep;
+}
+
+.pick__row {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 5px;
+}
+
+.pick__opt {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  font-family: $font-body;
+  font-size: 11px;
+  color: $ivory-dim;
+  background: rgba(247, 242, 229, 0.06);
+  box-shadow: inset 0 0 0 1px $felt-line;
+  cursor: pointer;
+}
+
+.pick__opt:hover {
+  color: $ivory;
+  background: rgba(247, 242, 229, 0.12);
+}
+
+.pick__opt:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.pick__opt--on {
+  font-weight: 600;
+  color: $ink;
+  background: linear-gradient(180deg, $brass-lit 0%, $brass 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .hero {
@@ -486,6 +591,16 @@ body,
   border-radius: 12px;
   background: rgba(9, 32, 26, 0.85);
   box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.3);
+}
+
+.settle__foot {
+  display: flex;
+  gap: 8px;
+
+  .btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 .settle__head {

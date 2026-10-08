@@ -1,5 +1,13 @@
 export type Rng = () => number
 
+/** 每张新牌桌取一个新种子，避免每次开局都复现同一副牌序 */
+export function freshSeed(): number {
+  const buffer = new Uint32Array(1)
+  const webcrypto = globalThis.crypto
+  if (webcrypto?.getRandomValues) return webcrypto.getRandomValues(buffer)[0]
+  return Math.floor(Math.random() * 0x100000000)
+}
+
 export function mulberry32(seed: number): Rng {
   let a = seed >>> 0
   return () => {

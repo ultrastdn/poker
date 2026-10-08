@@ -32,3 +32,7 @@ export function formatChips(amount: number): string {
   const grouped = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
   return (amount < 0 ? '-' : '') + grouped
 }
+
+export function signedChips(amount: number): string {
+  return amount > 0 ? `+${formatChips(amount)}` : formatChips(amount)
+}

@@ -2,11 +2,22 @@ import type { Card } from './cards'
 import { cardLabel, formatCards, standardDeck } from './cards'
 import type { Hand } from './evaluate'
 import { compareScore, evaluate } from './evaluate'
-import { mulberry32, shuffle } from './rng'
+import { freshSeed, hashKey, mulberry32, shuffle } from './rng'
 
 export type Phase = 'idle' | 'preflop' | 'flop' | 'turn' | 'river' | 'showdown'
 
 export type SeatStyle = 'tight' | 'loose' | 'aggro'
+
+export type Difficulty = 'easy' | 'standard' | 'sharp'
+
+export type SeatRole = 'button' | 'blind' | 'early' | 'middle' | 'late'
+
+export type SeatRead = {
+  dealt: number
+  played: number
+  raised: number
+  folded: number
+}
 
 export type Seat = {
   id: number
@@ -40,6 +51,21 @@ export type Winner = {
 export type LogKind = 'hand' | 'action' | 'street' | 'result'
 export type LogLine = { id: number; kind: LogKind; text: string }
 
+export type HandOutcome = 'win' | 'lose' | 'fold' | 'even'
+
+export type HandRecord = {
+  handNo: number
+  outcome: HandOutcome
+  invested: number
+  payout: number
+  net: number
+  heroCards: Card[]
+  heroHand: string
+  winnerName: string
+  winnerHand: string
+  showdown: boolean
+}
+
 export type Action =
   | { type: 'fold' }
   | { type: 'check' }
@@ -58,8 +84,14 @@ export type Game = {
   bbAmount: number
   target: number
   actor: number
+  aggressor: number
+  preflopAggressor: number
+  raiseCount: number
+  difficulty: Difficulty
+  reads: SeatRead[]
   pots: Pot[]
   winners: Winner[]
+  history: HandRecord[]
   showdownSeen: boolean
   log: LogLine[]
   logSeq: number
@@ -102,6 +134,38 @@ export function blindPositions(g: Game): { sb: number; bb: number } {
   return { sb: seatAt(g.seats, g.dealer + 1), bb: seatAt(g.seats, g.dealer + 2) }
 }
 
+/** 距按钮几个座位：0=按钮，1=小盲，2=大盲，最大=切位 */
+export function buttonDistance(seats: readonly Seat[], dealer: number, id: number): number {
+  const n = seats.length
+  return ((id - dealer) % n + n) % n
+}
+
+export function roleOf(g: Game, id: number): SeatRole {
+  const distance = buttonDistance(g.seats, g.dealer, id)
+  if (distance === 0) return 'button'
+  const upright = g.seats.length - 3
+  if (distance === 1 || distance === 2) return 'blind'
+  const placed = distance - 3
+  if (placed < Math.max(1, Math.ceil(upright / 3))) return 'early'
+  if (placed >= upright - Math.max(1, Math.floor(upright / 3))) return 'late'
+  return 'middle'
+}
+
+/** 本街第一个行动者：翻牌前是枪口位，翻牌后是按钮左边 */
+export function streetFirstSeat(g: Game): number {
+  if (g.phase === 'preflop') return seatAt(g.seats, blindPositions(g).bb + 1)
+  return seatAt(g.seats, g.dealer + 1)
+}
+
+/** 本街的行动次序：越大越晚行动（越有位置） */
+export function positionIndex(g: Game, id: number): number {
+  return seatAt(g.seats, id - streetFirstSeat(g))
+}
+
+export function actsAfter(g: Game, id: number, other: number): boolean {
+  return positionIndex(g, id) > positionIndex(g, other)
+}
+
 function nextSeatWhere(seats: readonly Seat[], from: number, test: (seat: Seat) => boolean): number {
   for (const seat of orderedSeats(seats, seatAt(seats, from))) {
     if (test(seat)) return seat.id
@@ -130,11 +194,12 @@ export function newGame(config: {
   sb?: number
   bb?: number
   seed?: number
+  difficulty?: Difficulty
 }): Game {
   const startingStack = config.stack ?? 1500
   const sbAmount = config.sb ?? 10
   const bbAmount = config.bb ?? 20
-  const seed = config.seed ?? 20261008
+  const seed = config.seed ?? freshSeed()
   const seats: Seat[] = config.names.map((name, id) => ({
     id,
     name,
@@ -162,8 +227,14 @@ export function newGame(config: {
     bbAmount,
     target: 0,
     actor: -1,
+    aggressor: -1,
+    preflopAggressor: -1,
+    raiseCount: 0,
+    difficulty: config.difficulty ?? 'standard',
+    reads: seats.map(() => ({ dealt: 0, played: 0, raised: 0, folded: 0 })),
     pots: [],
     winners: [],
+    history: [],
     showdownSeen: false,
     log: [],
     logSeq: 0,
@@ -185,7 +256,7 @@ function postBlind(seat: Seat, amount: number): number {
 export function startHand(game: Game): Game {
   const g = clone(game)
   g.handNo += 1
-  g.deck = shuffle(standardDeck(), mulberry32(g.seed + g.handNo * 7919))
+  g.deck = shuffle(standardDeck(), mulberry32(hashKey([String(g.seed), String(g.handNo)])))
   g.board = []
   g.pots = []
   g.winners = []
@@ -197,6 +268,9 @@ export function startHand(game: Game): Game {
   g.target = 0
 
   g.dealer = seatAt(g.seats, g.dealer + 1)
+  g.aggressor = -1
+  g.preflopAggressor = -1
+  g.raiseCount = 0
 
   for (const seat of g.seats) {
     seat.hole = []
@@ -211,6 +285,7 @@ export function startHand(game: Game): Game {
       seat.stack = g.startingStack
       pushLog(g, 'hand', `${seat.name} 补码 ${g.startingStack}`)
     }
+    g.reads[seat.id].dealt += 1
   }
 
   const { sb: sbIndex, bb: bbIndex } = blindPositions(g)
@@ -284,6 +359,8 @@ function collectStreet(g: Game): void {
     seat.acted = false
   }
   g.target = 0
+  g.aggressor = -1
+  g.raiseCount = 0
 }
 
 function dealCount(g: Game, count: number): Card[] {
@@ -347,6 +424,31 @@ function buildPots(seats: readonly Seat[]): Pot[] {
 }
 
 export function settle(g: Game): void {
+  awardPots(g)
+  pushRecord(g)
+}
+
+function pushRecord(g: Game): void {
+  const hero = g.seats.find((seat) => seat.human) ?? g.seats[0]
+  const invested = hero.committed
+  const payout = hero.won
+  const net = payout - invested
+  const top = g.winners[0]
+  g.history.push({
+    handNo: g.handNo,
+    outcome: hero.folded ? 'fold' : net > 0 ? 'win' : net < 0 ? 'lose' : 'even',
+    invested,
+    payout,
+    net,
+    heroCards: [...hero.hole],
+    heroHand: hero.reveal ? evaluate([...hero.hole, ...g.board]).name : '',
+    winnerName: top?.name ?? '',
+    winnerHand: top?.hand ?? '',
+    showdown: g.showdownSeen,
+  })
+}
+
+function awardPots(g: Game): void {
   g.phase = 'showdown'
   g.handOver = true
   const contenders = g.seats.filter(alive)
@@ -460,11 +562,13 @@ export function act(game: Game, action: Action): Game {
   const seat = g.seats[g.actor]
   if (!seat || !able(seat)) return g
   const me = g.actor
+
   g.actor = -1
 
   if (action.type === 'fold') {
     seat.folded = true
     seat.acted = true
+    g.reads[me].folded += 1
     pushLog(g, 'action', `${seat.name} 弃牌`)
   } else if (action.type === 'check') {
     if (g.target > seat.wager) return game
@@ -478,6 +582,7 @@ export function act(game: Game, action: Action): Game {
     } else {
       putChips(seat, diff)
       seat.acted = true
+      if (g.phase === 'preflop' && g.raiseCount > 0) g.reads[me].played += 1
       pushLog(g, 'action', `${seat.name} 跟注 ${seat.wager}${seat.allIn ? '（全押）' : ''}`)
     }
   } else {
@@ -494,6 +599,13 @@ export function act(game: Game, action: Action): Game {
       const reopened = raisedTo >= g.target + g.bbAmount
       g.target = Math.max(g.target, raisedTo)
       seat.acted = true
+      g.aggressor = me
+      g.raiseCount += 1
+      g.reads[me].raised += 1
+      if (g.phase === 'preflop') {
+        g.preflopAggressor = me
+        g.reads[me].played += 1
+      }
       for (const other of g.seats) {
         if (other.id !== me && able(other) && other.wager < g.target) other.acted = false
       }

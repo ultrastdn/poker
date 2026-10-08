@@ -6,6 +6,7 @@ import { equity } from '@/game/equity'
 import { compareScore, evaluate } from '@/game/evaluate'
 import type { Game } from '@/game/poker'
 import { act, blindPositions, newGame, potTotal, settle, startHand, turnOptions } from '@/game/poker'
+import { summarize } from '@/game/session'
 import { mulberry32, shuffle } from '@/game/rng'
 
 const RANKS: Record<string, number> = {
@@ -91,6 +92,25 @@ describe('deck', () => {
     const first = shuffle(standardDeck(), mulberry32(7)).map(cardKey).join(',')
     const second = shuffle(standardDeck(), mulberry32(7)).map(cardKey).join(',')
     expect(first).toBe(second)
+  })
+
+  it('deals a different first hand on every fresh table', () => {
+    const names = ['a', 'b', 'c']
+    const hands = Array.from({ length: 12 }, () => {
+      const g = startHand(newGame({ names, stack: 200, sb: 5, bb: 10 }))
+      return g.seats.map((seat) => seat.hole.map(cardKey).join('')).join('|')
+    })
+    expect(new Set(hands).size).toBe(12)
+  })
+
+  it('replays a seeded table but not its next hand', () => {
+    const names = ['a', 'b', 'c']
+    const first = startHand(newGame({ names, stack: 200, sb: 5, bb: 10, seed: 1234 }))
+    const twin = startHand(newGame({ names, stack: 200, sb: 5, bb: 10, seed: 1234 }))
+    const holes = (g: Game) => g.seats.map((seat) => seat.hole.map(cardKey).join(''))
+
+    expect(holes(twin)).toEqual(holes(first))
+    expect(holes(startHand(twin))).not.toEqual(holes(first))
   })
 })
 
@@ -229,6 +249,107 @@ describe('equity', () => {
   })
 })
 
+describe('hand records', () => {
+  it('books an uncontested pot as the payout minus what was committed', () => {
+    const g = newGame({ names: ['你', 'b', 'c'], stack: 100, sb: 5, bb: 10, seed: 20 })
+    g.handNo = 4
+    g.board = cards('2H 5D 9C')
+    g.seats[0].hole = cards('AD AH')
+    g.seats[0].committed = 30
+    g.seats[0].stack = 70
+    g.seats[1].committed = 25
+    g.seats[1].stack = 75
+    g.seats[1].folded = true
+    g.seats[2].committed = 10
+    g.seats[2].stack = 90
+    g.seats[2].folded = true
+
+    settle(g)
+
+    expect(g.history).toHaveLength(1)
+    expect(g.history[0]).toMatchObject({
+      handNo: 4,
+      outcome: 'win',
+      invested: 30,
+      payout: 65,
+      net: 35,
+      showdown: false,
+      heroHand: '',
+      winnerName: '你',
+    })
+  })
+
+  it('names both hands when the human is outdrawn at showdown', () => {
+    const g = newGame({ names: ['你', 'b', 'c'], stack: 100, sb: 5, bb: 10, seed: 21 })
+    g.board = cards('2H 5D 9C JS 4H')
+    g.seats[0].hole = cards('7D 7C')
+    g.seats[0].committed = 30
+    g.seats[0].stack = 70
+    g.seats[1].hole = cards('KD KH')
+    g.seats[1].committed = 30
+    g.seats[1].stack = 70
+    g.seats[2].committed = 10
+    g.seats[2].stack = 90
+    g.seats[2].folded = true
+
+    settle(g)
+
+    const record = g.history[0]
+    expect(record.outcome).toBe('lose')
+    expect(record.net).toBe(-30)
+    expect(record.heroHand).toBe('一对')
+    expect(record.winnerName).toBe('b')
+    expect(record.showdown).toBe(true)
+    expect(record.heroCards.map(cardKey)).toEqual(g.seats[0].hole.map(cardKey))
+  })
+
+  it('books a fold as losing only the chips already in the middle', () => {
+    const g = newGame({ names: ['你', 'b', 'c'], stack: 100, sb: 5, bb: 10, seed: 22 })
+    g.board = cards('2H 5D 9C')
+    g.seats[0].hole = cards('7D 2C')
+    g.seats[0].committed = 15
+    g.seats[0].stack = 85
+    g.seats[0].folded = true
+    g.seats[1].committed = 15
+    g.seats[1].stack = 85
+    g.seats[2].committed = 10
+    g.seats[2].stack = 90
+    g.seats[2].folded = true
+
+    settle(g)
+
+    expect(g.history[0]).toMatchObject({ outcome: 'fold', invested: 15, payout: 0, net: -15 })
+  })
+
+  it('keeps one record per hand and ties the session net to the stack', () => {
+    let g: Game = newGame({ names: ['你', '阿哲', '老赵'], stack: 200, sb: 5, bb: 10, seed: 23 })
+    const handNos: number[] = []
+    let stackNets = 0
+
+    for (let i = 0; i < 25; i++) {
+      const resting = g.seats[0].stack
+      g = startHand(g)
+      // 盲注在 startHand 里就扣掉了，基准要取开手前的 resting 码量（补码那手按新买入）
+      const baseline = resting > 0 ? resting : g.startingStack
+      while (!g.handOver) g = act(g, decide(g))
+
+      const record = g.history[g.history.length - 1]
+      expect(record.handNo).toBe(g.handNo)
+      expect(record.net).toBe(record.payout - record.invested)
+      expect(record.net).toBe(g.seats[0].stack - baseline)
+      handNos.push(record.handNo)
+      stackNets += record.net
+    }
+
+    expect(handNos).toEqual(Array.from({ length: 25 }, (_, index) => index + 1))
+    expect(summarize(g.history).net).toBe(stackNets)
+  })
+
+  it('reads an empty session as no hands and no swing', () => {
+    expect(summarize([])).toEqual({ hands: 0, net: 0, wins: 0, losses: 0, best: 0, worst: 0 })
+  })
+})
+
 describe('full hands', () => {
   it('keeps chips, cards and legality consistent over 60 hands', () => {
     let g: Game = newGame({
@@ -269,5 +390,66 @@ describe('full hands', () => {
       expect(seen.size).toBe(g.board.length + g.seats.length * 2)
       expect(g.winners.reduce((sum, winner) => sum + winner.amount, 0)).toBe(potTotal(g.seats))
     }
+  })
+})
+
+describe('table size', () => {
+  const sizes = [2, 6, 9] as const
+
+  it.each(sizes)('runs %i seats without leaking chips or street state', (size) => {
+    let g: Game = newGame({
+      names: Array.from({ length: size }, (_, id) => `S${id}`),
+      styles: Array.from(
+        { length: size },
+        (_, id) => (['tight', 'loose', 'aggro'] as const)[id % 3],
+      ),
+      stack: 500,
+      sb: 5,
+      bb: 10,
+      seed: 777,
+      difficulty: 'standard',
+    })
+
+    for (let hand = 0; hand < 30; hand++) {
+      g = startHand(g)
+      const baseline = g.seats.map((seat) => seat.stack + seat.committed)
+      let steps = 0
+
+      while (!g.handOver) {
+        steps += 1
+        expect(steps).toBeLessThan(240)
+        expect(g.seats.map((seat) => seat.stack + seat.committed)).toEqual(baseline)
+        g = act(g, decide(g))
+      }
+
+      expect(g.seats.reduce((sum, seat) => sum + seat.stack, 0)).toBe(
+        baseline.reduce((sum, value) => sum + value, 0),
+      )
+      expect(g.winners.reduce((sum, winner) => sum + winner.amount, 0)).toBe(potTotal(g.seats))
+      const seen = new Set([
+        ...g.board.map(cardKey),
+        ...g.seats.flatMap((seat) => seat.hole.map(cardKey)),
+      ])
+      expect(seen.size).toBe(g.board.length + size * 2)
+      expect(g.aggressor).toBe(-1)
+      expect(g.raiseCount).toBe(0)
+      expect(g.reads[0].dealt).toBe(hand + 1)
+    }
+  })
+
+  it('heads-up seats the button in the small blind and lets him act first', () => {
+    let g = newGame({ names: ['you', 'bot'], stack: 200, sb: 5, bb: 10, seed: 11 })
+    g = startHand(g)
+    const blinds = blindPositions(g)
+
+    expect(blinds.sb).toBe(g.dealer)
+    expect(g.seats[blinds.sb].wager).toBe(5)
+    expect(g.actor).toBe(g.dealer)
+
+    g = act(g, { type: 'call' })
+    expect(g.actor).toBe(blinds.bb)
+    g = act(g, { type: 'check' })
+    expect(g.phase).toBe('flop')
+    expect(g.actor).toBe(blinds.bb)
   })
 })

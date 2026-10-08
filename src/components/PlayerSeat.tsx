@@ -9,11 +9,13 @@ type Props = {
   seat: Seat
   isDealer: boolean
   isActor: boolean
+  compact?: boolean
   position: { left: string; top: string }
 }
 
-export default function PlayerSeat({ seat, isDealer, isActor, position }: Props) {
+export default function PlayerSeat({ seat, isDealer, isActor, compact = false, position }: Props) {
   const classes = ['seat']
+  if (compact) classes.push('seat--compact')
   if (isActor) classes.push('seat--actor')
   if (seat.folded) classes.push('seat--folded')
   if (seat.won > 0) classes.push('seat--won')

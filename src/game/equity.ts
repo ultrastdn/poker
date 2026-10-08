@@ -11,6 +11,8 @@ export type EquityInput = {
 }
 
 const cache = new Map<string, number>()
+/** 满员桌长会话下键值会持续累积，超限直接清空（只是重算，不影响结果） */
+const CACHE_LIMIT = 30000
 
 function knownKey(hole: Card[], board: Card[], opponents: number): string {
   return [hole.map(cardKey).join(''), board.map(cardKey).join(''), opponents].join('|')
@@ -55,6 +57,7 @@ export function equity(input: EquityInput): number {
   }
 
   const value = Math.round(((wins + ties * 0.5) / trials) * 100) / 100
+  if (cache.size > CACHE_LIMIT) cache.clear()
   cache.set(key, value)
   return value
 }
