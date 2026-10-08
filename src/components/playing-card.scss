@@ -120,8 +120,10 @@
 }
 
 .pc--hero .pc__corner--flip {
+  top: auto;
   right: 5px;
   bottom: 5px;
+  left: auto;
 }
 
 .pc--mini .pc__rank {
