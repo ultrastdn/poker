@@ -161,12 +161,30 @@
 }
 
 .record__row {
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(247, 242, 229, 0.06);
+  font-size: 11px;
+}
+
+.record__main {
   display: flex;
   align-items: center;
   gap: 7px;
+  width: 100%;
   padding: 5px 0;
-  border-bottom: 1px solid rgba(247, 242, 229, 0.06);
+  border: 0;
+  background: transparent;
+  font-family: $font-body;
   font-size: 11px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.record__main:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 1px;
+  border-radius: 6px;
 }
 
 .record__no {
@@ -217,6 +235,180 @@
 
 .record__net--down {
   color: $loss;
+}
+
+.metrics {
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: rgba(247, 242, 229, 0.04);
+  box-shadow: inset 0 0 0 1px $felt-line;
+}
+
+.metrics__row {
+  display: flex;
+  gap: 8px;
+}
+
+.metric {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: rgba(9, 32, 26, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.2);
+}
+
+.metric__k {
+  @include eyebrow;
+
+  font-size: 9px;
+  color: $brass;
+}
+
+.metric__v {
+  @include numerals;
+
+  font-size: 15px;
+  color: $ivory;
+}
+
+.metrics__hint {
+  margin: 6px 0 0;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  color: $muted-deep;
+}
+
+.pos {
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid $felt-line;
+  list-style: none;
+}
+
+.pos__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 11px;
+}
+
+.pos__name {
+  min-width: 34px;
+  color: $ivory-dim;
+}
+
+.pos__hands {
+  @include numerals;
+
+  flex: 1;
+  font-size: 10px;
+  color: $muted-deep;
+}
+
+.pos__net {
+  @include numerals;
+
+  min-width: 48px;
+  text-align: right;
+  color: $muted;
+}
+
+.pos__net--up {
+  color: $gain;
+}
+
+.pos__net--down {
+  color: $loss;
+}
+
+.review {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  list-style: none;
+  border-radius: 8px;
+  background: rgba(5, 18, 15, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.16);
+}
+
+.review__step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px 0;
+  border-bottom: 1px dashed rgba(247, 242, 229, 0.08);
+}
+
+.review__step:last-child {
+  border-bottom: 0;
+}
+
+.review__street {
+  @include eyebrow;
+
+  font-size: 9px;
+  color: $brass;
+}
+
+.review__line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.review__you {
+  color: $ivory-dim;
+}
+
+.review__arrow {
+  color: $muted-deep;
+}
+
+.review__adv {
+  color: $ivory;
+  font-weight: 600;
+}
+
+.review__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.review__tag--good {
+  color: $gain;
+  background: rgba(121, 214, 162, 0.14);
+}
+
+.review__tag--loose,
+.review__tag--tight {
+  color: $loss;
+  background: rgba(239, 140, 134, 0.14);
+}
+
+.review__tag--passive,
+.review__tag--aggressive {
+  color: $brass-lit;
+  background: rgba(201, 162, 57, 0.16);
+}
+
+.review__why {
+  font-size: 10px;
+  line-height: 1.5;
+  color: $muted-deep;
+}
+
+.review__none {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  color: $muted-deep;
 }
 
 @media (prefers-reduced-motion: reduce) {

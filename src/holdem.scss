@@ -708,6 +708,230 @@ body,
   color: $muted;
 }
 
+// —— 顶栏：设置按钮与每日一手徽标 ——
+.rail__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rail__gear {
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  font-family: $font-body;
+  font-size: 11px;
+  font-weight: 600;
+  color: $brass-lit;
+  background: rgba(9, 32, 26, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.42);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.rail__gear:hover {
+  background: rgba(15, 50, 41, 0.85);
+}
+
+.rail__gear:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.rail__gear--on {
+  color: $ivory;
+  background: rgba(201, 162, 57, 0.26);
+  box-shadow: inset 0 0 0 1px rgba(230, 196, 99, 0.85);
+}
+
+.rail__daily {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: $font-body;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: $ink;
+  background: linear-gradient(180deg, $brass-lit 0%, $brass 100%);
+  vertical-align: middle;
+}
+
+// —— 开局信息卡（idle 覆盖层的参数摘要）——
+.brief {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 0 0 13px;
+}
+
+.brief__cell {
+  padding: 5px 8px;
+  border-radius: 8px;
+  text-align: left;
+  background: rgba(9, 32, 26, 0.5);
+  box-shadow: inset 0 0 0 1px $felt-line;
+}
+
+.brief__cell dt {
+  @include eyebrow;
+
+  font-size: 8px;
+  color: $muted-deep;
+}
+
+.brief__cell dd {
+  @include numerals;
+
+  margin: 1px 0 0;
+  font-size: 13px;
+  color: $ivory;
+}
+
+.overlay__row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn--ghost {
+  height: 38px;
+  font-size: 13px;
+  font-weight: 500;
+  color: $muted;
+  background: rgba(247, 242, 229, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.3);
+}
+
+.btn--ghost:hover {
+  color: $ivory;
+  background: rgba(247, 242, 229, 0.1);
+}
+
+// —— 英雄区：底池赔率与听牌 ——
+.hero__pot,
+.hero__draw {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: $muted-deep;
+
+  strong {
+    @include numerals;
+
+    color: $ivory-dim;
+  }
+}
+
+.hero__pot--good strong {
+  color: $gain;
+}
+
+.hero__pot--bad strong {
+  color: $loss;
+}
+
+.hero__draw strong {
+  color: $brass-lit;
+}
+
+// —— 行动计时器 ——
+.timer {
+  position: relative;
+  flex: 1 1 100%;
+  height: 18px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: rgba(247, 242, 229, 0.06);
+  box-shadow: inset 0 0 0 1px $felt-line;
+}
+
+.timer__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 9px;
+  background: linear-gradient(90deg, rgba(201, 162, 57, 0.55) 0%, rgba(230, 196, 99, 0.75) 100%);
+  transition: width 1s linear;
+}
+
+.timer--low .timer__fill {
+  background: linear-gradient(90deg, rgba(181, 40, 44, 0.6) 0%, rgba(239, 140, 134, 0.85) 100%);
+}
+
+.timer__text {
+  position: relative;
+  display: block;
+  padding: 2px 10px;
+  font-family: $font-mono;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: $ivory;
+}
+
+// —— 教练提示 ——
+.coach {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: rgba(9, 32, 26, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 57, 0.28);
+}
+
+.coach__badge {
+  flex-shrink: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: $ink;
+  background: linear-gradient(180deg, $brass-lit 0%, $brass 100%);
+}
+
+.coach__why {
+  font-size: 10px;
+  line-height: 1.45;
+  color: $muted;
+}
+
+.coach--fold .coach__badge {
+  color: $ivory;
+  background: rgba(239, 140, 134, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(239, 140, 134, 0.6);
+}
+
+.coach--call .coach__badge,
+.coach--check .coach__badge {
+  color: $ivory;
+  background: rgba(121, 214, 162, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(121, 214, 162, 0.55);
+}
+
+// —— 键盘快捷键提示 ——
+.dock__keys {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 9px;
+  color: $muted-deep;
+}
+
+.dock__keys kbd {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: $font-mono;
+  font-size: 9px;
+  color: $ivory-dim;
+  background: rgba(247, 242, 229, 0.08);
+  box-shadow: inset 0 0 0 1px $felt-line;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn,
   .meter__fill {
@@ -717,5 +941,9 @@ body,
   .hero--turn {
     animation: none;
     box-shadow: inset 0 0 0 1px rgba(230, 196, 99, 0.7);
+  }
+
+  .timer__fill {
+    transition: none;
   }
 }

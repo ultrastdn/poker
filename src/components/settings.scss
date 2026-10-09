@@ -1,0 +1,254 @@
+@use '../styles/tokens' as *;
+
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet__scrim {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(3, 12, 10, 0.6);
+  cursor: pointer;
+}
+
+.sheet__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+  max-height: 88%;
+  padding: 7px 14px 14px;
+  border-radius: 16px 16px 12px 12px;
+  background: linear-gradient(180deg, rgba(15, 50, 41, 0.99) 0%, rgba(5, 18, 15, 0.99) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(201, 162, 57, 0.32),
+    0 -10px 26px rgba(0, 0, 0, 0.55);
+  animation: sheet-rise 200ms ease-out both;
+}
+
+@keyframes sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sheet__grab {
+  width: 34px;
+  height: 3px;
+  align-self: center;
+  border-radius: 2px;
+  background: rgba(247, 242, 229, 0.22);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sheet__eyebrow {
+  @include eyebrow;
+
+  font-size: 10px;
+  color: $brass;
+}
+
+.sheet__close {
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 999px;
+  font-family: $font-body;
+  font-size: 11px;
+  color: $muted;
+  background: rgba(247, 242, 229, 0.07);
+  box-shadow: inset 0 0 0 1px $felt-line;
+  cursor: pointer;
+}
+
+.sheet__close:hover {
+  color: $ivory;
+  background: rgba(247, 242, 229, 0.13);
+}
+
+.sheet__close:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.sheet__body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cfg {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cfg__label {
+  flex: 0 0 42px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-align: right;
+  color: $muted-deep;
+}
+
+.cfg__row {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 5px;
+}
+
+.cfg__opt {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  font-family: $font-body;
+  font-size: 11px;
+  color: $ivory-dim;
+  background: rgba(247, 242, 229, 0.06);
+  box-shadow: inset 0 0 0 1px $felt-line;
+  cursor: pointer;
+}
+
+.cfg__opt:hover {
+  color: $ivory;
+  background: rgba(247, 242, 229, 0.12);
+}
+
+.cfg__opt:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.cfg__opt--on {
+  font-weight: 600;
+  color: $ink;
+  background: linear-gradient(180deg, $brass-lit 0%, $brass 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.sheet__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.sw {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  font-family: $font-body;
+  text-align: left;
+  background: rgba(247, 242, 229, 0.04);
+  box-shadow: inset 0 0 0 1px $felt-line;
+  cursor: pointer;
+}
+
+.sw:hover {
+  background: rgba(247, 242, 229, 0.08);
+}
+
+.sw:focus-visible {
+  outline: 2px solid $brass-lit;
+  outline-offset: 2px;
+}
+
+.sw__knob {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  background: rgba(247, 242, 229, 0.16);
+  transition: background 160ms ease;
+}
+
+.sw__knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: $ivory-dim;
+  transition: transform 160ms ease;
+}
+
+.sw--on .sw__knob {
+  background: rgba(201, 162, 57, 0.5);
+}
+
+.sw--on .sw__knob::after {
+  transform: translateX(15px);
+  background: $brass-lit;
+}
+
+.sw__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sw__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: $ivory;
+}
+
+.sw__desc {
+  font-size: 10px;
+  line-height: 1.4;
+  color: $muted-deep;
+}
+
+.sheet__foot {
+  display: flex;
+  gap: 8px;
+  padding-top: 2px;
+
+  .btn {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet__panel {
+    animation: none;
+  }
+
+  .sw__knob,
+  .sw__knob::after {
+    transition: none;
+  }
+}

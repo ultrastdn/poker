@@ -50,9 +50,11 @@ describe('table shell', () => {
   it('opens on the six handed lobby with a seat per opponent', () => {
     expect(count(markup, /class="seat[" ]/g)).toBe(5)
     expect(markup).toContain('6 人桌')
-    expect(count(markup, /class="pick__opt[" ]/g)).toBe(6)
-    expect(count(markup, /pick__opt--on/g)).toBe(2)
+    // 开局信息卡展示人数/机器人/起始码/盲注四项参数摘要
+    expect(count(markup, /class="brief__cell"/g)).toBe(4)
     expect(markup).toContain('开始牌局')
+    expect(markup).toContain('每日一手')
+    expect(markup).toContain('牌桌设置')
   })
 
   it('keeps the hero panel and action dock readable before any card is dealt', () => {

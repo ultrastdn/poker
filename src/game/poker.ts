@@ -53,6 +53,19 @@ export type LogLine = { id: number; kind: LogKind; text: string }
 
 export type HandOutcome = 'win' | 'lose' | 'fold' | 'even'
 
+/** 英雄每个行动点的快照，用于赛后复盘：当时的牌面、底池赔率与所选动作 */
+export type Decision = {
+  phase: Phase
+  board: Card[]
+  opponents: number
+  pot: number
+  toCall: number
+  canRaise: boolean
+  raiseMin: number
+  raiseMax: number
+  action: Action
+}
+
 export type HandRecord = {
   handNo: number
   outcome: HandOutcome
@@ -64,6 +77,18 @@ export type HandRecord = {
   winnerName: string
   winnerHand: string
   showdown: boolean
+  /** 英雄本手所处位置，用于按位置统计盈亏 */
+  position: SeatRole
+  /** 是否主动入池（翻牌前跟注或加注，不含盲注过牌） */
+  vpip: boolean
+  /** 翻牌前是否加注 */
+  pfr: boolean
+  /** 本手加注次数，用于激进系数 AF */
+  aggressions: number
+  /** 本手跟注次数，用于激进系数 AF */
+  calls: number
+  /** 逐决策点回放数据 */
+  decisions: Decision[]
 }
 
 export type Action =
@@ -92,6 +117,8 @@ export type Game = {
   pots: Pot[]
   winners: Winner[]
   history: HandRecord[]
+  /** 当前手尚未结算的英雄决策点，结算时并入牌局记录 */
+  decisions: Decision[]
   showdownSeen: boolean
   log: LogLine[]
   logSeq: number
@@ -235,6 +262,7 @@ export function newGame(config: {
     pots: [],
     winners: [],
     history: [],
+    decisions: [],
     showdownSeen: false,
     log: [],
     logSeq: 0,
@@ -260,6 +288,7 @@ export function startHand(game: Game): Game {
   g.board = []
   g.pots = []
   g.winners = []
+  g.decisions = []
   g.log = []
   g.logSeq = 0
   g.showdownSeen = false
@@ -434,6 +463,8 @@ function pushRecord(g: Game): void {
   const payout = hero.won
   const net = payout - invested
   const top = g.winners[0]
+  const decisions = g.decisions
+  const preflop = decisions.filter((decision) => decision.phase === 'preflop')
   g.history.push({
     handNo: g.handNo,
     outcome: hero.folded ? 'fold' : net > 0 ? 'win' : net < 0 ? 'lose' : 'even',
@@ -445,6 +476,14 @@ function pushRecord(g: Game): void {
     winnerName: top?.name ?? '',
     winnerHand: top?.hand ?? '',
     showdown: g.showdownSeen,
+    position: roleOf(g, hero.id),
+    vpip: preflop.some(
+      (decision) => decision.action.type === 'raise' || (decision.action.type === 'call' && decision.toCall > 0),
+    ),
+    pfr: preflop.some((decision) => decision.action.type === 'raise'),
+    aggressions: decisions.filter((decision) => decision.action.type === 'raise').length,
+    calls: decisions.filter((decision) => decision.action.type === 'call' && decision.toCall > 0).length,
+    decisions,
   })
 }
 
@@ -562,6 +601,23 @@ export function act(game: Game, action: Action): Game {
   const seat = g.seats[g.actor]
   if (!seat || !able(seat)) return g
   const me = g.actor
+
+  if (seat.human) {
+    const snapshot = turnOptions(g)
+    if (snapshot) {
+      g.decisions.push({
+        phase: g.phase,
+        board: g.board.slice(),
+        opponents: g.seats.filter((other) => other.id !== me && !other.folded).length,
+        pot: snapshot.potNow,
+        toCall: snapshot.toCall,
+        canRaise: snapshot.canRaise,
+        raiseMin: snapshot.raiseMin,
+        raiseMax: snapshot.raiseMax,
+        action,
+      })
+    }
+  }
 
   g.actor = -1
 
